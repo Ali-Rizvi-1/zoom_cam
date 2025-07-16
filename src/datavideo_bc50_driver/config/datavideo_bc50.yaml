@@ -1,0 +1,20 @@
+image_width: 1920
+image_height: 1080
+camera_name: datavideo_bc50
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1729.541517, 0.0, 960.665195, 0.0, 1729.228992, 589.313883, 0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.211310, 0.156267, -0.000928, 0.000826, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1634.788574, 0.0, 961.816844, 0.0, 0.0, 1692.888916, 590.149603, 0.0, 0.0, 0.0, 1.0, 0.0]
