@@ -21,7 +21,7 @@ from cv_bridge import CvBridge
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image,CompressedImage, CameraInfo
 from std_msgs.msg import String, Int16
 from std_srvs.srv import Trigger
 from sensor_msgs.srv import SetCameraInfo
@@ -40,7 +40,7 @@ class ZoomController(Node):
         self.declare_parameter('password', 'admin')
         self.declare_parameter('camera_info_url', '')
         self.declare_parameter('frame_id', 'camera_frame')
-        self.declare_parameter('max_zoom_level', 36)
+        self.declare_parameter('max_zoom_level', 30)
         self.declare_parameter('publish_rate_hz', 30.0)
 
         self.camera_hostname = self.get_parameter('camera_hostname').get_parameter_value().string_value
@@ -81,6 +81,7 @@ class ZoomController(Node):
         self.image_pub = self.create_publisher(Image,
                                             'camera/image_raw',
                                             reliable_qos)
+        self.compressed_pub = self.create_publisher(CompressedImage, 'camera/image_raw/compressed', reliable_qos)
         self.camera_info_pub = self.create_publisher(CameraInfo, 'camera/camera_info', 10)
 
         self.create_subscription(String, 'camera_command', self.command_callback, 10)
@@ -190,11 +191,23 @@ class ZoomController(Node):
         if frame is None:
             return
         stamp = self.get_clock().now().to_msg()
+        
+        # Raw image
         img_msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
         img_msg.header.stamp = stamp
         img_msg.header.frame_id = self.frame_id
         self.image_pub.publish(img_msg)
+        
+        # Compressed (for network streaming)
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        comp_msg = CompressedImage()
+        comp_msg.header.stamp = stamp
+        comp_msg.header.frame_id = self.frame_id
+        comp_msg.format = 'jpeg'
+        comp_msg.data = buffer.tobytes()
+        self.compressed_pub.publish(comp_msg)
 
+        # Camera info
         self.camera_info.header.stamp = stamp
         self.camera_info.header.frame_id = self.frame_id
         self.camera_info_pub.publish(self.camera_info)
